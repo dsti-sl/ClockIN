@@ -46,9 +46,8 @@ export default async function DashboardPage() {
         supabase
           .from("events")
           .select("id,name,status,event_date,has_sessions")
-          .neq("status", "archived")
           .order("event_date", { ascending: false })
-          .limit(5),
+          .limit(6),
         supabase
           .from("events")
           .select("*", { count: "exact", head: true })
@@ -107,9 +106,8 @@ export default async function DashboardPage() {
         .from("events")
         .select("id,name,status,event_date,has_sessions")
         .eq("created_by", userId)
-        .neq("status", "archived")
         .order("event_date", { ascending: false })
-        .limit(5),
+        .limit(6),
     ]);
 
     stats = {

@@ -5,7 +5,6 @@ import {
   Calendar,
   MapPin,
   Clock,
-  Layers,
   ArrowUpRight,
   Timer,
 } from "lucide-react";
@@ -23,21 +22,13 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const sessionCount = event.sessions?.[0]?.count ?? 0;
-
   return (
     <Link
       href={`/events/${event.id}`}
-      className="
-        group block
-        rounded-2xl
-        border border-gray-200
-        bg-white
-        p-5
-        transition-all
-        hover:border-indigo-200
-        hover:shadow-sm
-      "
+      className={
+        `group block rounded-2xl border p-5 transition-all hover:border-indigo-200 hover:shadow-sm
+         border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-800`
+      }
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
@@ -47,7 +38,7 @@ export default function EventCard({ event }: EventCardProps) {
               flex h-11 w-11 shrink-0
               items-center justify-center
               rounded-xl
-              bg-indigo-50
+              bg-indigo-50 dark:bg-indigo-950/30
             "
           >
             <Calendar className="h-5 w-5 text-indigo-600" />
@@ -55,18 +46,12 @@ export default function EventCard({ event }: EventCardProps) {
 
           <div className="min-w-0">
             <h2
-              className="
-                truncate
-                text-sm
-                font-semibold
-                text-gray-900
-                group-hover:text-indigo-600
-              "
+              className="truncate text-sm font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300"
             >
               {event.name}
             </h2>
 
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-400 dark:text-slate-400">
               Created {timeAgo(event.created_at)}
             </p>
           </div>
@@ -98,6 +83,9 @@ export default function EventCard({ event }: EventCardProps) {
     border
     border-gray-100
     bg-gray-50/60
+    dark:divide-slate-700
+    dark:border-slate-700
+    dark:bg-slate-900/40
     py-3
   "
       >
@@ -106,17 +94,12 @@ export default function EventCard({ event }: EventCardProps) {
           <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
 
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wide text-gray-400">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-slate-400">
               Location
             </p>
 
             <p
-              className="
-        truncate
-        text-xs
-        font-medium
-        text-gray-700
-      "
+              className="truncate text-xs font-medium text-gray-700 dark:text-slate-200"
             >
               {event.location}
             </p>
@@ -125,7 +108,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Date */}
         <div className="flex min-w-0 items-center gap-2 px-3">
-          <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-slate-400" />
 
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wide text-gray-400">
@@ -133,12 +116,7 @@ export default function EventCard({ event }: EventCardProps) {
             </p>
 
             <p
-              className="
-        truncate
-        text-xs
-        font-medium
-        text-gray-700
-      "
+              className="truncate text-xs font-medium text-gray-700 dark:text-slate-200"
             >
               {formatDate(event.event_date)}
             </p>
@@ -147,7 +125,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Time */}
         <div className="flex min-w-0 items-center gap-2 px-3">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <Clock className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-slate-400" />
 
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wide text-gray-400">
@@ -155,12 +133,7 @@ export default function EventCard({ event }: EventCardProps) {
             </p>
 
             <p
-              className="
-        truncate
-        text-xs
-        font-medium
-        text-gray-700
-      "
+              className="truncate text-xs font-medium text-gray-700 dark:text-slate-200"
             >
               {formatTime(event.start_time)}
               {" - "}
@@ -180,22 +153,8 @@ export default function EventCard({ event }: EventCardProps) {
         "
       >
         {event.has_sessions ? (
-          <div
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              bg-indigo-50
-              px-3
-              py-1.5
-              text-xs
-              font-medium
-              text-indigo-600
-            "
-          >
-            <Layers className="h-3.5 w-3.5" />
-            {sessionCount} session{sessionCount !== 1 && "s"}
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-950/30 px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-300">
+            {event.sessions?.[0]?.count ?? 0} session(s)
           </div>
         ) : (
           <div
@@ -212,18 +171,7 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
         )}
 
-        <div
-          className="
-            flex
-            items-center
-            gap-1
-            text-xs
-            font-semibold
-            text-gray-400
-            transition-colors
-            group-hover:text-indigo-600
-          "
-        >
+          <div className="flex items-center gap-1 text-xs font-semibold text-gray-400 transition-colors group-hover:text-indigo-600 dark:text-slate-400 dark:group-hover:text-indigo-300">
           Open
           <ArrowUpRight
             className="

@@ -120,7 +120,7 @@ export default function NewEventPage() {
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Pin location on map</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-slate-300">Pin location on map</p>
               <p className="text-xs text-gray-500 mt-0.5">Optional – restrict check‑ins to a specific area</p>
             </div>
             <button
@@ -129,7 +129,7 @@ export default function NewEventPage() {
                 setShowLocationPicker(v => !v);
                 if (!showLocationPicker) { setLat(null); setLng(null); }
               }}
-              className={`relative h-6 w-11 rounded-full transition-colors ${showLocationPicker ? 'bg-indigo-600' : 'bg-gray-200'}`}
+              className={`relative h-6 w-11 rounded-full transition-colors cursor-pointer ${showLocationPicker ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-slate-700'}`}
             >
               <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${showLocationPicker ? 'translate-x-5' : ''}`} />
             </button>
@@ -138,13 +138,14 @@ export default function NewEventPage() {
           {showLocationPicker && (
             <div className="mt-4 border-t border-gray-100 pt-4">
               <LocationPicker
-                onLocationSelect={(latitude, longitude) => {
+                onLocationSelect={(latitude, longitude, addressName) => {
                   setLat(latitude);
                   setLng(longitude);
+                  setForm(f => ({ ...f, location: addressName || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}` }));
                 }}
               />
               <p className="text-xs text-gray-400 mt-2">
-                Search for a place or click the map to pin. Attendees will need to be within 500 m.
+                Use your current GPS location or search for a place. Attendees will need to be within 150 m.
               </p>
             </div>
           )}
@@ -185,7 +186,7 @@ export default function NewEventPage() {
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Enable sessions</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-slate-300">Enable sessions</p>
               <p className="text-xs text-gray-500 mt-0.5">Split into named segments (morning, afternoon…)</p>
             </div>
             <button

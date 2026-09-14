@@ -30,6 +30,23 @@ export function formatDateTime(dt: string) {
   try { return format(parseISO(dt), "dd MMM yyyy, h:mm a"); } catch { return dt; }
 }
 
+export function statusLabel(status: string): string {
+  switch (status) {
+    case "active": return "ongoing";
+    case "ended":
+    case "archived": return "completed";
+    default: return status;
+  }
+}
+
+// Presence: online if a heartbeat was received within the last 5 minutes
+export const PRESENCE_WINDOW_MS = 5 * 60 * 1000;
+
+export function isOnline(lastSeenAt?: string | null): boolean {
+  if (!lastSeenAt) return false;
+  return Date.now() - new Date(lastSeenAt).getTime() < PRESENCE_WINDOW_MS;
+}
+
 // Validation
 export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -73,7 +90,7 @@ export function markSubmitted(scopeId: string) {
 
 export interface CachedAttendee {
   full_name: string; phone: string; email: string;
-  institution: string; designation: string;
+  institution: string; mda: string; designation: string;
 }
 
 export function getCachedAttendee(): CachedAttendee | null {

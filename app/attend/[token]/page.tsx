@@ -13,7 +13,7 @@ import {
 } from '@/lib/utils'
 import { validateAttendanceForm } from '@/lib/validation'
 import type { TokenPayload } from '@/lib/types'
-import { X, CheckCircle2, Loader2, Clock, MapPin, AlertCircle, RefreshCw } from 'lucide-react'
+import { X, CheckCircle2, Loader2, Clock, MapPin, AlertCircle, RefreshCw, Search } from 'lucide-react'
 
 type LocState = 'requesting' | 'granted' | 'denied' | 'unsupported'
 
@@ -37,14 +37,21 @@ export default function AttendPage() {
 
   // Event coordinates for geo‑fence
   const [eventCoords, setEventCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [maxDistance, setMaxDistance] = useState(150)
 
   const [form, setForm] = useState({
     full_name:   '',
     email:       '',
     phone:       '',
     institution: '',
+    mda:         '',
     designation: '',
   })
+
+  // MDA combobox (mirrors the add-admin MDA picker)
+  const [mdas,        setMdas]        = useState<{ id: string; name: string }[]>([])
+  const [mdaQuery,    setMdaQuery]    = useState('')
+  const [mdaOpen,     setMdaOpen]     = useState(false)
 
   function startLocationRequest() {
     if (!navigator.geolocation) {
@@ -90,6 +97,26 @@ export default function AttendPage() {
 
     ;(async () => {
       try {
+        const configRes = await fetch('/api/config')
+        if (configRes.ok) {
+          const { geoFenceMaxDistance } = await configRes.json()
+          if (typeof geoFenceMaxDistance === 'number' && geoFenceMaxDistance > 0) {
+            setMaxDistance(geoFenceMaxDistance)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load geo-fence config', e)
+      }
+      try {
+        const mdaRes = await fetch('/api/mdas/options')
+        if (mdaRes.ok) {
+          const { mdas: mdaList } = await mdaRes.json()
+          if (Array.isArray(mdaList)) setMdas(mdaList)
+        }
+      } catch (e) {
+        console.error('Failed to load MDA options', e)
+      }
+      try {
         await supabase.rpc('sync_event_statuses')
       } catch (e) {
         console.error('Failed to sync event statuses', e)
@@ -127,6 +154,7 @@ export default function AttendPage() {
           email:       cached.email       ?? '',
           phone:       cached.phone       ?? '',
           institution: cached.institution ?? '',
+          mda:         cached.mda         ?? '',
           designation: cached.designation ?? '',
         })
       }
@@ -182,7 +210,7 @@ export default function AttendPage() {
         eventCoords.lat,
         eventCoords.lng
       )
-      const MAX_DISTANCE = 500 // meters
+      const MAX_DISTANCE = maxDistance
       if (distance > MAX_DISTANCE) {
         errs.location = `You are too far from the event location (${distance.toFixed(0)}m away). Please move closer.`
         setFieldErrors(errs)
@@ -221,6 +249,7 @@ export default function AttendPage() {
       email:              form.email.trim(),
       phone:              form.phone.trim(),
       institution:        form.institution.trim(),
+      mda:                form.mda.trim() || null,
       designation:        form.designation.trim(),
       device_fingerprint: getOrCreateDeviceId(),
       qr_token_used:      token,
@@ -424,6 +453,90 @@ export default function AttendPage() {
                 required
               />
               {fieldErrors.institution && <p className="mt-1 text-xs text-red-500">{fieldErrors.institution}</p>}
+            </div>
+
+            {/* MDA combobox — optional, mirrors the add-admin MDA picker */}
+            <div className="relative">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-400" />
+                <input
+                  type="text"
+                  role="combobox"
+                  aria-expanded={mdaOpen}
+                  aria-controls="attendee-mda-listbox"
+                  aria-autocomplete="list"
+                  autoComplete="off"
+                  placeholder={mdas.length ? 'MDA (optional) — start typing…' : 'MDA list unavailable'}
+                  value={mdaQuery}
+                  onChange={e => {
+                    const v = e.target.value
+                    setMdaQuery(v)
+                    const exact = mdas.find(m => m.name.toLowerCase() === v.trim().toLowerCase())
+                    setForm(f => ({ ...f, mda: exact ? exact.name : v.trim() }))
+                    if (fieldErrors.mda) setFieldErrors(p => { const c = { ...p }; delete c.mda; return c })
+                    setMdaOpen(true)
+                  }}
+                  onFocus={() => setMdaOpen(true)}
+                  onBlur={() => setTimeout(() => setMdaOpen(false), 120)}
+                  className="input-base pl-9"
+                />
+                {form.mda && (
+                  <button
+                    type="button"
+                    aria-label="Clear MDA"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => {
+                      setForm(f => ({ ...f, mda: '' }))
+                      setMdaQuery('')
+                      setMdaOpen(false)
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {mdaOpen && (
+                <ul
+                  id="attendee-mda-listbox"
+                  role="listbox"
+                  className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                >
+                  {(() => {
+                    const q = mdaQuery.trim().toLowerCase()
+                    const matches = q ? mdas.filter(m => m.name.toLowerCase().includes(q)) : mdas
+                    if (matches.length === 0) {
+                      return (
+                        <li className="px-4 py-2 text-sm text-gray-500 dark:text-slate-400">No MDA found matching “{mdaQuery.trim()}”.</li>
+                      )
+                    }
+                    return matches.map(m => (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={m.name === form.mda}
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => {
+                            setForm(f => ({ ...f, mda: m.name }))
+                            setMdaQuery(m.name)
+                            setMdaOpen(false)
+                          }}
+                          className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors hover:bg-indigo-50 dark:hover:bg-slate-700 ${
+                            m.name === form.mda
+                              ? 'bg-indigo-50 font-semibold text-indigo-700 dark:bg-slate-700 dark:text-white'
+                              : 'text-gray-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {m.name}
+                        </button>
+                      </li>
+                    ))
+                  })()}
+                </ul>
+              )}
+              {fieldErrors.mda && <p className="mt-1 text-xs text-red-500">{fieldErrors.mda}</p>}
             </div>
 
             <div>

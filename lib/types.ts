@@ -14,8 +14,22 @@ export interface Profile {
   is_super_admin: boolean;
   is_active:      boolean;
   is_first_login: boolean;
+  mda_id:         string | null;
+  // joined
+  mda?:           { name: string } | { name: string }[] | null;
+  last_seen_at?:  string | null;
   created_at:     string;
   updated_at:     string;
+}
+
+// ── MDA (MINISTRY / DEPARTMENT / AGENCY) ─────────────────────
+export interface Mda {
+  id:         string;
+  name:       string;
+  is_active:  boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── EVENT ────────────────────────────────────────────────────
@@ -71,6 +85,7 @@ export interface Attendee {
   phone:              string;
   email:              string | null;
   institution:        string | null;
+  mda:                string | null;
   designation:        string | null;
   device_fingerprint: string;
   qr_token_used:      string | null;
@@ -109,6 +124,7 @@ export interface AttendanceFormData {
   phone:       string;
   email:       string;
   institution: string;
+  mda:         string;
   designation: string;
 }
 

@@ -5,7 +5,8 @@ import Link from "next/link";
 import QRDisplay from "@/components/qr/QRDisplay";
 import HeatMap from "@/components/attendance/HeatMap";
 import AttendeeTable from "@/components/attendance/AttendeeTable";
-import { ChevronLeft, AlertTriangle } from "lucide-react";
+import { ChevronLeft, AlertTriangle, RotateCcw } from "lucide-react";
+import { statusLabel } from "@/lib/utils";
 import type { Attendee, RevivalNote } from "@/lib/types";
 import StartSessionButton from "@/components/events/StartSessionButton";
 import EndSessionButton from "@/components/events/EndSessionButton";
@@ -53,15 +54,15 @@ export default async function SessionDetailPage({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Link href={session.status === "ended" || session.status === "archived" ? "/archive" : `/events/${eventId}`}
-            className="mb-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
-            <ChevronLeft className="h-3.5 w-3.5" /> {session.status === "ended" || session.status === "archived" ? "Back to archive" : session.event?.name}
+          <Link href={`/events`}
+            className="mb-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200">
+            <ChevronLeft className="h-3.5 w-3.5" /> {session.status === "ended" || session.status === "archived" ? "Back to events" : session.event?.name}
           </Link>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-semibold text-gray-900">{session.name}</h1>
-            <span className={`badge-${session.status}`}>{session.status}</span>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{session.name}</h1>
+            <span className={`badge-${session.status}`}>{statusLabel(session.status)}</span>
           </div>
-          <p className="mt-1 text-sm text-gray-500">{session.event?.location}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-300">{session.event?.location}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {safeAttendees.length > 0 && session.event && (
@@ -79,24 +80,24 @@ export default async function SessionDetailPage({
           {session.status === "pending"  && <StartSessionButton sessionId={sessionId} />}
           {session.status === "active"   && <EndSessionButton   sessionId={sessionId} />}
           {(session.status === "ended" || session.status === "archived") && (
-  <Link href={`/events/${eventId}/sessions/${sessionId}/revive`} className="btn-primary">Revive</Link>
+  <Link href={`/events/${eventId}/sessions/${sessionId}/revive`} className="btn-primary inline-flex items-center gap-1.5"><RotateCcw className="h-4 w-4" />Revive Session</Link>
 )}
         </div>
       </div>
 
       {/* Revival note banner */}
       {latestNote && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500 dark:text-amber-400" />
           <div className="min-w-0">
             <p className="font-semibold mb-0.5">
               Revival note
               {safeNotes.length > 1 && (
-                <span className="ml-1.5 text-xs font-normal text-amber-600">({safeNotes.length} revivals)</span>
+                <span className="ml-1.5 text-xs font-normal text-amber-600 dark:text-amber-400">({safeNotes.length} revivals)</span>
               )}
             </p>
             <p>{latestNote.note}</p>
-            <p className="mt-1 text-xs text-amber-500">
+            <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">
               {new Date(latestNote.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
             </p>
           </div>
@@ -107,8 +108,8 @@ export default async function SessionDetailPage({
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {session.started_at && (
           <div className="card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Started</p>
-            <p className="mt-1 text-sm text-gray-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-300">Started</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-slate-200">
               {new Date(session.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>
           </div>
@@ -129,7 +130,13 @@ export default async function SessionDetailPage({
       />
 
       {/* Manual attendance */}
-      <ManualAttendanceUpload eventId={eventId} sessionId={sessionId} />
+      <ManualAttendanceUpload
+        eventId={eventId}
+        sessionId={sessionId}
+        eventLocation={session.event?.location}
+        eventLat={session.event?.lat}
+        eventLng={session.event?.lng}
+      />
 
       {/* Full-width map */}
       <div className="card p-6">
@@ -145,11 +152,11 @@ export default async function SessionDetailPage({
       {/* Revival history */}
       {safeNotes.length > 1 && (
         <div className="card p-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Revival history</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-300">Revival history</p>
           {safeNotes.map((n) => (
             <div key={n.id} className="border-l-2 border-amber-300 pl-3">
-              <p className="text-xs text-gray-700">{n.note}</p>
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="text-xs text-gray-700 dark:text-slate-200">{n.note}</p>
+              <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-400">
                 {new Date(n.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
               </p>
             </div>

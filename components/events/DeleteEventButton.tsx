@@ -43,7 +43,7 @@ export default function DeleteEventButton({ eventId, eventName }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-xl border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+        className="flex items-center gap-1.5 rounded-xl border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40"
       >
         <Trash2 className="h-4 w-4" />
         Delete
@@ -52,19 +52,19 @@ export default function DeleteEventButton({ eventId, eventName }: Props) {
       {/* Confirmation Modal */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl dark:bg-slate-800">
             <div className="p-6 space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Delete event?</h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Delete event?</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-slate-300">
                   <strong>{eventName}</strong> and all its attendees, sessions, and QR tokens will be
                   permanently deleted. This cannot be undone.
                 </p>
               </div>
-              {error && <p className="text-xs text-red-600">{error}</p>}
+              {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
               <div className="flex gap-3">
                 <button
                   onClick={() => { setOpen(false); setError(""); }}

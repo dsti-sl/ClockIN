@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/attend"];
-const API_PATHS    = ["/api/attendance", "/api/token"];
+const PUBLIC_PATHS = ["/login", "/attend", "/first-login"];
+const API_PATHS    = ["/api/attendance", "/api/token", "/api/mdas/options", "/api/config"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -50,15 +50,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?reason=inactive", request.url));
   }
 
-  if (profile?.is_first_login && !pathname.startsWith("/onboarding")) {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
-  }
-
-  if (!profile?.is_first_login && pathname.startsWith("/onboarding")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  if (pathname.startsWith("/users") && !profile?.is_super_admin) {
+  if (
+    (pathname.startsWith("/users") || pathname.startsWith("/mdas")) &&
+    !profile?.is_super_admin
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
