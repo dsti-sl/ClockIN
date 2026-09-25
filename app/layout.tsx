@@ -2,6 +2,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Script from 'next/script';
 import 'leaflet/dist/leaflet.css';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -39,9 +40,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`try{const s=localStorage.getItem('theme');const p=typeof window!=='undefined'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(!s&&p)){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}`}
+        </Script>
       </head>
       <body className="bg-gray-50 antialiased">{children}</body>
     </html>

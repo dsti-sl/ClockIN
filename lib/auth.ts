@@ -18,7 +18,6 @@ export async function requireAuth(): Promise<Profile> {
 
   if (!profile) redirect("/login");
   if (!profile.is_active) redirect("/login?reason=inactive");
-  if (profile.is_first_login) redirect("/onboarding");
 
   return profile as Profile;
 }

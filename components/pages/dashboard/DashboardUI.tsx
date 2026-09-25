@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, Radio, CheckCircle2, Archive, Plus } from "lucide-react";
+import {
+  Calendar,
+  Radio,
+  CheckCircle2,
+  Archive,
+  Plus,
+  ChevronRight,
+} from "lucide-react";
 
 import MonthlyAttendeesChart from "@/components/analytics/MonthlyAttendeesChart";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import { cn, formatDate, statusLabel } from "@/lib/utils";
 import type { DashboardStats, Event } from "@/lib/types";
 
 type RecentEvent = Pick<
@@ -54,7 +63,7 @@ export default function DashboardUI({
   return (
     <div className="space-y-6 p-4 lg:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
 
@@ -63,15 +72,18 @@ export default function DashboardUI({
           </p>
         </div>
 
-        <Link
-          href="/events/new"
-          className="
-          btn-primary flex items-center gap-1.5
-          "
-        >
-          <Plus className="h-4 w-4" />
-          New event
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            href="/events/new"
+            className="
+            btn-primary flex items-center gap-1.5
+            "
+          >
+            <Plus className="h-4 w-4" />
+            New event
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -93,7 +105,7 @@ export default function DashboardUI({
                   className="
                     text-xs font-medium
                     uppercase tracking-wide
-                    text-gray-500
+                    text-gray-500 dark:text-white
                   "
                 >
                   {label}
@@ -102,7 +114,7 @@ export default function DashboardUI({
                 <p
                   className="
                     mt-1.5 text-3xl
-                    font-semibold text-gray-900
+                    font-semibold text-gray-900 dark:text-white
                   "
                 >
                   {value}
@@ -128,7 +140,7 @@ export default function DashboardUI({
       <MonthlyAttendeesChart />
 
       {/* Recent Events */}
-      {recentEvents && recentEvents.length > 0 && (
+      {recentEvents && (
         <div
           className="
           card overflow-hidden
@@ -161,80 +173,95 @@ export default function DashboardUI({
             </Link>
           </div>
 
-          <div
-            className="
-            divide-y divide-gray-50
-          "
-          >
-            {recentEvents.map((event) => (
-              <Link
-                key={event.id}
-                href={`/events/${event.id}`}
-                className="
-                  flex items-center justify-between
-                  px-5 py-3
-                  hover:bg-gray-50
-                  "
-              >
-                <div>
-                  <p
-                    className="
-                      text-sm font-medium
-                      text-gray-900
-                    "
-                  >
-                    {event.name}
-                  </p>
-
-                  <p
-                    className="
-                      text-xs text-gray-400
-                    "
-                  >
-                    {event.event_date}
-                  </p>
-                </div>
-
-                <span
-                  className={`
-                    badge-${event.status}
-                    `}
-                >
-                  {event.status}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty */}
-      {recentEvents?.length === 0 && (
-        <div
-          className="
-          card flex flex-col
-          items-center gap-3
-          py-16 text-center
-        "
-        >
-          <Calendar
-            className="
-            h-10 w-10
-            text-gray-300
+          {recentEvents.length === 0 ? (
+            <p
+              className="
+              px-5 py-8 text-sm text-gray-400
             "
-          />
+            >
+              No events yet.
+            </p>
+          ) : (
+            <div
+              className="
+              space-y-3 p-5
+            "
+            >
+              {recentEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/events/${event.id}`}
+                  className="
+                    group flex items-center justify-between
+                    gap-3 rounded-xl border
+                    border-gray-100 bg-white p-3
+                    shadow-sm transition
+                    hover:border-indigo-100 hover:shadow-md
+                    dark:border-slate-700 dark:bg-slate-800
+                    dark:hover:border-slate-600
+                    "
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className="
+                        flex h-10 w-10 shrink-0
+                        items-center justify-center rounded-xl
+                        bg-indigo-50 text-indigo-600
+                        dark:bg-indigo-950/30 dark:text-indigo-300
+                      "
+                    >
+                      <Calendar className="h-5 w-5" />
+                    </div>
 
-          <p
-            className="
-            font-medium text-gray-500
-          "
-          >
-            There are no events for today. Start by creating one.
-          </p>
+                    <div className="min-w-0">
+                      <p
+                        className="
+                          truncate text-sm font-semibold
+                          text-gray-900 dark:text-slate-100
+                        "
+                      >
+                        {event.name}
+                      </p>
 
-          <Link href="/events/new" className="btn-primary">
-            Create your first event
-          </Link>
+                      <p
+                        className="
+                          mt-0.5 text-xs text-gray-400
+                          dark:text-slate-400
+                        "
+                      >
+                        {formatDate(event.event_date)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                        event.status === "active" &&
+                          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+                        event.status === "upcoming" &&
+                          "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+                        (event.status === "ended" ||
+                          event.status === "archived") &&
+                          "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+                      )}
+                    >
+                      {statusLabel(event.status)}
+                    </span>
+
+                    <ChevronRight
+                      className="
+                        h-4 w-4 text-gray-300 transition
+                        group-hover:translate-x-0.5 group-hover:text-indigo-500
+                        dark:text-slate-600
+                      "
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

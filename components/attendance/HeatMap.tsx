@@ -97,11 +97,12 @@ export default function HeatMap({ attendees, centerLat, centerLng }: Props) {
             <div style="font-size:12px;line-height:1.6;min-width:150px">
               <strong style="font-size:13px">${a.full_name}</strong><br/>
               ${a.institution ? `<span style="color:#6B7280">${a.institution}</span><br/>` : ''}
+              ${a.mda ? `<span style="color:#6B7280">${a.mda}</span><br/>` : ''}
               ${a.designation ? `<span style="color:#6B7280">${a.designation}</span><br/>` : ''}
               <span style="color:${color};font-weight:600">
                 ${isGreen ? '✓ Matched location' : '⚠ Different location'}
               </span>
-              ${a.location_label ? `<br/><span style="color:#9CA3AF;font-size:11px">${a.location_label}</span>` : ''}
+              ${a.location_label ? `<br/><span style="color:#9CA3AF;font-size:11px">${a.location_label.replace(/\s*\(Entered by Admin\)$/i, '')}</span>` : ''}
             </div>
           `, { maxWidth: 220 })
           .addTo(map)
@@ -134,44 +135,44 @@ export default function HeatMap({ attendees, centerLat, centerLng }: Props) {
     <div className="space-y-2">
       {/* Stats row */}
       {valid.length > 0 && (
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-slate-300">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-green-600 ring-1 ring-white ring-offset-1" />
-            <strong className="text-gray-900">{matchedCount}</strong> same location
+            <strong className="text-gray-900 dark:text-white">{matchedCount}</strong> same location
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-red-600 ring-1 ring-white ring-offset-1" />
-            <strong className="text-gray-900">{differentCount}</strong> different location
+            <strong className="text-gray-900 dark:text-white">{differentCount}</strong> different location
           </span>
-          <span className="ml-auto text-gray-400">{valid.length} / {attendees.length} with GPS</span>
+          <span className="ml-auto text-gray-400 dark:text-slate-400">{valid.length} / {attendees.length} with GPS</span>
         </div>
       )}
 
       {/* Map — full width, taller */}
       <div
-        className="relative w-full overflow-hidden rounded-xl border border-gray-200"
+        className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700"
         style={{ height: 420 }}
       >
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
         {/* Empty state overlay */}
         {valid.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 gap-2 pointer-events-none">
-            <span className="text-2xl">📍</span>
-            <p className="text-sm text-gray-500">No location data yet</p>
-          </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 gap-2 pointer-events-none dark:bg-slate-900/80">
+          <span className="text-2xl">📍</span>
+          <p className="text-sm text-gray-500 dark:text-slate-200">No location data yet</p>
+        </div>
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-3 left-3 z-[400] flex flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 p-2.5 text-xs shadow backdrop-blur-sm">
-          <span className="font-semibold text-gray-700 mb-0.5">Location map</span>
+        <div className="absolute bottom-3 left-3 z-[400] flex flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 p-2.5 text-xs shadow backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95">
+          <span className="font-semibold text-gray-700 mb-0.5 dark:text-white">Location map</span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
-            <span className="text-gray-600">Matched location</span>
+            <span className="text-gray-600 dark:text-slate-200">Matched location</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
-            <span className="text-gray-600">Different location</span>
+            <span className="text-gray-600 dark:text-slate-200">Different location</span>
           </span>
         </div>
       </div>

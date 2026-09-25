@@ -7,7 +7,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const profile = await getProfile();
 
   if (!profile)               redirect("/login");
-  if (profile.is_first_login) redirect("/onboarding");
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -17,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="pt-14 lg:pt-0 min-h-full flex flex-col">
           <div className="flex-1">{children}</div>
           <footer className="border-t border-gray-200 py-4 text-center text-sm text-gray-400 flex items-center justify-center gap-1">
-            <img src="IMG_DSTI-removebg-preview.png" alt="DSTI" className="h-10 w-auto" /> &copy; 2026 Create By DSTI. All rights reserved.
+            <img src="IMG_DSTI-removebg-preview.png" alt="DSTI" className="h-10 w-auto" /> &copy; 2026 Created By DSTI. All rights reserved.
           </footer>
         </div>
       </main>

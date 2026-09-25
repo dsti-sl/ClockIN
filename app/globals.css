@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Custom properties ─────────────────────────────────────── */
 :root {
   --primary: #4f46e5;
@@ -283,3 +285,112 @@ select {
   border-radius: 0.75rem;
   z-index: 0;
 }
+
+/* ── Dark Mode Design System ─────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark main,
+html.dark div.min-h-screen {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html.dark aside,
+html.dark nav {
+  background-color: #0f172a;
+  border-color: #1e293b;
+}
+
+html.dark .card,
+html.dark div.card {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .section-title,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4 {
+  color: #f8fafc;
+}
+
+html.dark .label {
+  color: #94a3b8;
+}
+
+html.dark .input-base,
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="date"],
+html.dark input[type="time"],
+html.dark textarea,
+html.dark select {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  background-color: #1e293b;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+html.dark .btn-secondary {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+html.dark .btn-secondary:hover {
+  background-color: #334155;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+html.dark .btn-ghost {
+  color: #94a3b8;
+}
+
+html.dark .btn-ghost:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+html.dark .btn-danger {
+  background-color: #450a0a;
+  color: #fca5a5;
+}
+
+html.dark .btn-danger:hover {
+  background-color: #7f1d1d;
+  color: #fecaca;
+}
+
+html.dark table thead {
+  background-color: #0f172a;
+}
+
+html.dark table tbody tr {
+  border-color: #334155;
+}
+
+html.dark table tbody tr:hover {
+  background-color: #334155;
+}
+
+
+

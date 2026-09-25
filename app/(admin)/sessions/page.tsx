@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ClipboardList, Radio } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, statusLabel } from "@/lib/utils";
 import type { Session } from "@/lib/types";
 
 export const revalidate = 0;
@@ -99,7 +99,7 @@ function SessionGroup({
                   {s.event?.event_date ? ` · ${formatDate(s.event.event_date)}` : ""}
                 </p>
               </div>
-              <span className={`badge-${s.status} flex-shrink-0`}>{s.status}</span>
+              <span className={`badge-${s.status} flex-shrink-0`}>{statusLabel(s.status)}</span>
             </Link>
           ))}
         </div>
