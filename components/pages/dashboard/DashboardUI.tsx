@@ -11,9 +11,20 @@ import {
 } from "lucide-react";
 
 import MonthlyAttendeesChart from "@/components/analytics/MonthlyAttendeesChart";
+import DashboardFilterForm from "@/components/pages/dashboard/DashboardFilterForm";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { cn, formatDate, statusLabel } from "@/lib/utils";
-import type { DashboardStats, Event } from "@/lib/types";
+import {
+  dashboardFiltersToQuery,
+  type DashboardFilters,
+} from "@/lib/dashboard-filters";
+import type { PeriodRange } from "@/lib/period";
+import type {
+  AdminOption,
+  DashboardStats,
+  Event,
+  MonthlyAttendees,
+} from "@/lib/types";
 
 type RecentEvent = Pick<
   Event,
@@ -25,17 +36,40 @@ type Props = {
   pastEvents: number;
   recentEvents: RecentEvent[] | null;
   isSuperAdmin: boolean;
+  filters: DashboardFilters;
+  /** Selected period. Null shows the default overview. */
+  range: PeriodRange | null;
+  /** Server date (YYYY-MM-DD), so server and browser agree on "today". */
+  today: string;
+  adminOptions: AdminOption[] | null;
+  /** Chart points for the selected period. Null keeps the default yearly chart. */
+  chart: MonthlyAttendees[] | null;
 };
+
+const CHART_TITLES = {
+  hour: "Check-ins per hour",
+  day: "Check-ins per day",
+  month: "Check-ins per month",
+} as const;
 
 export default function DashboardUI({
   stats,
   pastEvents,
   recentEvents,
   isSuperAdmin,
+  filters,
+  range,
+  today,
+  adminOptions,
+  chart,
 }: Props) {
+  const isFiltered = range !== null;
+  // Remounts the form and chart when the URL filters change (e.g. browser back).
+  const filterKey = dashboardFiltersToQuery(filters);
+
   const statCards = [
     {
-      label: "Total Daily Events",
+      label: isFiltered ? "Events" : "Total Daily Events",
       value: stats.total_events,
       icon: Calendar,
       color: "text-blue-600 bg-blue-50",
@@ -47,13 +81,13 @@ export default function DashboardUI({
       color: "text-green-600 bg-green-50",
     },
     {
-      label: "Total Daily Attendees",
+      label: isFiltered ? "Check-ins" : "Total Daily Attendees",
       value: stats.total_checkins,
       icon: CheckCircle2,
       color: "text-indigo-600 bg-indigo-50",
     },
     {
-      label: "Total Past Events",
+      label: isFiltered ? "Past Events" : "Total Past Events",
       value: pastEvents,
       icon: Archive,
       color: "text-amber-600 bg-amber-50",
@@ -136,8 +170,26 @@ export default function DashboardUI({
         ))}
       </div>
 
+      {/* Filters */}
+      <DashboardFilterForm
+        key={`filters-${filterKey}`}
+        filters={filters}
+        range={range}
+        today={today}
+        adminOptions={adminOptions}
+      />
+
       {/* Chart */}
-      <MonthlyAttendeesChart />
+      {range && chart ? (
+        <MonthlyAttendeesChart
+          key={`chart-${filterKey}`}
+          data={chart}
+          title={CHART_TITLES[range.granularity]}
+          periodLabel={range.label}
+        />
+      ) : (
+        <MonthlyAttendeesChart />
+      )}
 
       {/* Recent Events */}
       {recentEvents && (
@@ -158,7 +210,12 @@ export default function DashboardUI({
               font-semibold text-gray-900
             "
             >
-              Recent events
+              {isFiltered ? "Matching events" : "Recent events"}
+              {isFiltered && stats.total_events > recentEvents.length && (
+                <span className="ml-2 text-xs font-normal text-gray-400 dark:text-slate-400">
+                  latest {recentEvents.length} of {stats.total_events}
+                </span>
+              )}
             </h2>
 
             <Link
@@ -179,7 +236,7 @@ export default function DashboardUI({
               px-5 py-8 text-sm text-gray-400
             "
             >
-              No events yet.
+              {isFiltered ? "No events match these filters." : "No events yet."}
             </p>
           ) : (
             <div

@@ -153,6 +153,19 @@ export interface DashboardStats {
   past_events:     number;
 }
 
+// ── DASHBOARD CHART POINT ────────────────────────────────────
+export interface MonthlyAttendees {
+  /** X-axis label: a month, or a day or hour on the filtered dashboard. */
+  month: string;
+  count: number;
+}
+
+// ── ADMIN OPTION (dashboard "created by" filter) ─────────────
+export interface AdminOption {
+  id:   string;
+  name: string;
+}
+
 // ── CLUSTERED ATTENDEE (for heatmap) ────────────────────────
 export interface AttendeeWithCluster extends Attendee {
   cluster: "green" | "red";
