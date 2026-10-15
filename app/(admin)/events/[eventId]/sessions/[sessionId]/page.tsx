@@ -65,7 +65,7 @@ export default async function SessionDetailPage({
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-300">{session.event?.location}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {safeAttendees.length > 0 && session.event && (
+          {session.event && (
             <DownloadAttendeesButton
               eventName={session.event.name}
               location={session.event.location}
@@ -119,7 +119,12 @@ export default async function SessionDetailPage({
       {/* QR code */}
       {session.status === "active" && session.qr_token && (
         <div className="card p-6 flex justify-center">
-          <QRDisplay token={session.qr_token} label={`Session: ${session.name}`} />
+          <QRDisplay
+            token={session.qr_token}
+            label={`Session: ${session.name}`}
+            title={session.event?.name}
+            subtitle={session.event?.location}
+          />
         </div>
       )}
 

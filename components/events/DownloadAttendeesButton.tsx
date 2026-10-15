@@ -23,6 +23,27 @@ function formatDateLong(dateStr: string): string {
   });
 }
 
+function tableBody(count: number): string {
+  return Array.from({ length: count }, () => `
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
+}
+
+const tableHead = `
+  <tr>
+    <th class="col-no center-align">No.</th>
+    <th class="col-name">Full Name</th>
+    <th class="col-ph">Phone</th>
+    <th class="col-em">Email</th>
+    <th class="col-des">Designation</th>
+    <th class="col-org">Institution</th>
+    <th class="col-org">MDA</th>
+  </tr>`;
+
+// Number of extra blank continuation pages (table only, no header) shown
+// when the list is empty, so the sheet can be printed multiple times.
+const BLANK_SHEETS = 3;
+const ROWS_PER_SHEET = 25;
+
 function buildHTML(props: Props, institution: string, coatOfArmsUrl: string): string {
   const { eventName, location, eventDate, attendees, sessionName } = props;
   const title  = sessionName ? `${eventName} — ${sessionName}` : eventName;
@@ -37,13 +58,20 @@ function buildHTML(props: Props, institution: string, coatOfArmsUrl: string): st
       <td>${esc(a.mda ?? "")}</td>
     </tr>`).join("");
 
-  // Add blank rows to pad to at least 20
+  // Blank rows (no numbers) to pad to at least 20 on the main page
   const blanks = Math.max(0, 20 - attendees.length);
-  const blankRows = Array.from({ length: blanks }, (_, i) => `
-    <tr>
-      <td class="center-align" style="color:#546e7a;font-weight:bold;">${attendees.length + i + 1}</td>
-      <td></td><td></td><td></td><td></td><td></td><td></td>
-    </tr>`).join("");
+  const blankRows = tableBody(blanks);
+
+  // Extra pages: just the table format, no header, printable multiple times
+  const continuationPages = attendees.length === 0
+    ? Array.from({ length: BLANK_SHEETS }, () => `
+  <div class="page page-break">
+    <table class="continuation-table">
+      <thead>${tableHead}</thead>
+      <tbody>${tableBody(ROWS_PER_SHEET)}</tbody>
+    </table>
+  </div>`).join("")
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -58,12 +86,14 @@ function buildHTML(props: Props, institution: string, coatOfArmsUrl: string): st
     background: #fff;
   }
   .page {
-    width: 210mm;
-    min-height: 297mm;
+    width: 297mm;
+    min-height: 210mm;
     margin: 0 auto;
-    padding: 18mm 15mm 20mm;
+    padding: 16mm 15mm 18mm;
     background: #fff;
   }
+  .page-break { page-break-before: always; break-before: page; }
+  .continuation-table { margin-top: 0; }
 
   /* Header */
   .header { text-align: center; margin-bottom: 6px; }
@@ -90,34 +120,34 @@ function buildHTML(props: Props, institution: string, coatOfArmsUrl: string): st
     font-size: 12px;
     font-weight: 700;
     padding: 9px 7px;
-    border: 1px solid #0d2346;
+    border: 3px solid #0d2346;
     text-align: left;
   }
   thead th.center-align, tbody td.center-align { text-align: center; }
   tbody td {
-    border: 1px solid #b0bec5;
-    height: 36px;
-    padding: 3px 7px;
+    border: 3px solid #222222;
+    height: 42px;
+    padding: 3px 8px;
     font-size: 12px;
     color: #212121;
     vertical-align: middle;
   }
   tbody tr:nth-child(even) td { background: #fafafa; }
 
-  .col-no   { width: 5%; }
-  .col-name { width: 22%; }
-  .col-ph   { width: 15%; }
-  .col-em   { width: 22%; }
-  .col-des  { width: 17%; }
-  .col-org  { width: 19%; }
+  .col-no   { width: 4%; }
+  .col-name { width: 26%; }
+  .col-ph   { width: 14%; }
+  .col-em   { width: 26%; }
+  .col-des  { width: 14%; }
+  .col-org  { width: 8%; }
 
   @page {
   margin: 0;
-  size: A4;
+  size: A4 landscape;
 }
   @media print {
   body { background: #fff; }
-  .page { width: 100%; padding: 18mm 15mm 20mm; margin: 0; }
+  .page { width: 100%; padding: 16mm 15mm 18mm; margin: 0; }
   thead { display: table-row-group; }
   thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #0d2346 !important; color: #fff !important; }
 }
@@ -150,23 +180,14 @@ function buildHTML(props: Props, institution: string, coatOfArmsUrl: string): st
 
   <!-- Table -->
   <table>
-    <thead>
-      <tr>
-        <th class="col-no center-align">No.</th>
-        <th class="col-name">Full Name</th>
-        <th class="col-ph">Phone</th>
-        <th class="col-em">Email</th>
-        <th class="col-des">Designation</th>
-        <th class="col-org">Institution</th>
-        <th class="col-org">MDA</th>
-      </tr>
-    </thead>
+    <thead>${tableHead}</thead>
     <tbody>
       ${rows}
       ${blankRows}
     </tbody>
   </table>
 </div>
+${continuationPages}
 </body>
 </html>`;
 }

@@ -106,7 +106,7 @@ export default async function EventDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!event.has_sessions && safeAttendees.length > 0 && (
+          {!event.has_sessions && (
             <DownloadAttendeesButton
               eventName={event.name}
               location={event.location}
@@ -163,7 +163,12 @@ export default async function EventDetailPage({
                 )}
               </div>
               <div className="flex justify-center">
-                <QRDisplay token={event.qr_token} label={`Scan to check in: ${event.name}`} />
+                <QRDisplay
+                  token={event.qr_token}
+                  label={`Scan to check in: ${event.name}`}
+                  title={event.name}
+                  subtitle={event.location}
+                />
               </div>
             </div>
           )}

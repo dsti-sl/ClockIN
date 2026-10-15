@@ -1,11 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/attend", "/first-login"];
+const PUBLIC_PATHS = ["/login", "/attend", "/first-login", "/auth/confirm"];
 const API_PATHS    = ["/api/attendance", "/api/token", "/api/mdas/options", "/api/config"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Supabase builds the invite-email link from the project's Site URL. When
+  // that Site URL contains a path (e.g. ".../first-login"), the link arrives
+  // here with that path duplicated — "/first-login/auth/confirm" or
+  // "/first-login/first-login" — which 404s. Strip the duplicated leading
+  // segment and forward to the real route, preserving the query string, so
+  // invite links work without any Supabase dashboard change.
+  if (pathname.startsWith("/first-login/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice("/first-login".length);
+    return NextResponse.redirect(url);
+  }
 
   if (
     PUBLIC_PATHS.some(p => pathname.startsWith(p)) ||

@@ -96,6 +96,17 @@ export default function FirstLoginPage() {
 
       let linked = false
 
+      // 0) Email link pointed straight at this page: ?token_hash=...&type=invite
+      const tokenHash = params.get('token_hash')
+      const otpType   = params.get('type')
+      if (tokenHash && otpType) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: otpType as 'invite' | 'signup' | 'recovery' | 'email' | 'magiclink',
+          token_hash: tokenHash,
+        })
+        linked = !error
+      }
+
       // 1) PKCE-style redirect: ?code=...
       const code = params.get('code')
       if (code) {
