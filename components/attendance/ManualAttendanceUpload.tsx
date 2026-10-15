@@ -354,13 +354,13 @@ export default function ManualAttendanceUpload({
               {manualErrors.phone && <p className="mt-1 text-xs text-red-600">{manualErrors.phone}</p>}
             </div>
             <div>
-              <label className="label">Email *</label>
+              <label className="label">Email (optional)</label>
               <input
                 type="email"
                 className="input-base"
                 value={manualForm.email}
                 onChange={(e) => setManualForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="Email address"
+                placeholder="Email address (optional)"
               />
               {manualErrors.email && <p className="mt-1 text-xs text-red-600">{manualErrors.email}</p>}
             </div>

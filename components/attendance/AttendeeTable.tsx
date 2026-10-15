@@ -2,9 +2,21 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { RefreshCw, Eye, X, MapPin, Phone, Mail, Building2, BadgeInfo, Clock, ChevronLeft, ChevronRight, Search, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { RefreshCw, Eye, X, MapPin, Phone, Mail, Building2, Landmark, BadgeInfo, Clock, ChevronLeft, ChevronRight, Search, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { validateAttendanceForm, type FormErrors } from '@/lib/validation'
 import type { Attendee } from '@/lib/types'
+import { dayOfTimestamp, formatDay } from '@/lib/period'
+
+type MethodFilter = 'all' | 'qr' | 'manual'
+
+// Sentinel option value for attendees who did not record an MDA.
+const NO_MDA = '__none__'
+
+const METHOD_OPTIONS: { value: MethodFilter; label: string }[] = [
+  { value: 'all',    label: 'All methods' },
+  { value: 'qr',     label: 'QR check-in' },
+  { value: 'manual', label: 'Added by admin' },
+]
 
 interface Props {
   attendees:   Attendee[]
@@ -19,6 +31,9 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
   const [page, setPage] = useState(0)
   const [perPage, setPerPage] = useState(5)
   const [search, setSearch] = useState('')
+  const [dayFilter, setDayFilter] = useState('')
+  const [methodFilter, setMethodFilter] = useState<MethodFilter>('all')
+  const [mdaFilter, setMdaFilter] = useState('')
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     full_name: '',
@@ -52,7 +67,23 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
 
   const rows = attendees.filter(a => !deletedIds.has(a.id))
 
+  const mdaNames = [...new Set(rows.map(a => a.mda?.trim()).filter((m): m is string => Boolean(m)))]
+    .sort((a, b) => a.localeCompare(b))
+  // Check-in days, newest first. Only revived events span more than one day.
+  const checkInDays = [...new Set(rows.map(a => dayOfTimestamp(a.created_at)))].sort().reverse()
+  const isFiltering = Boolean(search) || Boolean(dayFilter) || methodFilter !== 'all' || Boolean(mdaFilter)
+  // A select only shows when it can split the list (or is already in use).
+  const showDayFilter    = checkInDays.length > 1 || Boolean(dayFilter)
+  const showMethodFilter = (rows.some(a => a.method === 'manual') && rows.some(a => a.method !== 'manual')) || methodFilter !== 'all'
+  const showMdaFilter    = mdaNames.length > 0 || Boolean(mdaFilter)
+
   const filtered = rows.filter(a => {
+    if (dayFilter && dayOfTimestamp(a.created_at) !== dayFilter) return false
+    if (methodFilter === 'manual' && a.method !== 'manual') return false
+    if (methodFilter === 'qr'     && a.method === 'manual') return false
+    if (mdaFilter === NO_MDA && a.mda?.trim()) return false
+    if (mdaFilter && mdaFilter !== NO_MDA && a.mda?.trim() !== mdaFilter) return false
+
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -70,6 +101,9 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
   const paginated = filtered.slice(currentPage * perPage, (currentPage + 1) * perPage)
 
   const perPageOptions = [5, 10, 15, 25, 50]
+
+  const selectClass =
+    'rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-600 dark:text-slate-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 transition-colors'
 
   function refresh() {
     startTransition(() => router.refresh())
@@ -152,7 +186,7 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
       ...selected,
       full_name:       editForm.full_name.trim(),
       phone:           editForm.phone.trim(),
-      email:           editForm.email.trim(),
+      email:           editForm.email.trim() || null,
       institution:     editForm.institution.trim(),
       mda:             editForm.mda.trim() || null,
       designation:     editForm.designation.trim(),
@@ -190,7 +224,9 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
       <div className="border-b border-gray-100 px-5 py-3 flex items-center justify-between gap-3 dark:border-slate-800">
         <h2 className="section-title">
           Attendees
-          <span className="ml-2 text-sm font-normal text-gray-400 dark:text-slate-400">({rows.length})</span>
+          <span className="ml-2 text-sm font-normal text-gray-400 dark:text-slate-400">
+            ({isFiltering ? `${filtered.length} of ${rows.length}` : rows.length})
+          </span>
         </h2>
         <button
           onClick={refresh}
@@ -202,9 +238,9 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
         </button>
       </div>
 
-      {/* Search bar */}
-      <div className="px-5 py-2 border-b border-gray-100 dark:border-slate-800">
-        <div className="relative">
+      {/* Search + filters */}
+      <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-2 sm:flex-row sm:items-center dark:border-slate-800">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-400" />
           <input
             type="text"
@@ -214,13 +250,55 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
             className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 transition-colors"
           />
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {showDayFilter && (
+            <select
+              value={dayFilter}
+              onChange={e => { setDayFilter(e.target.value); setPage(0) }}
+              className={selectClass}
+              aria-label="Filter by check-in day"
+            >
+              <option value="">All days</option>
+              {checkInDays.map(day => (
+                <option key={day} value={day}>{formatDay(day)}</option>
+              ))}
+            </select>
+          )}
+          {showMethodFilter && (
+            <select
+              value={methodFilter}
+              onChange={e => { setMethodFilter(e.target.value as MethodFilter); setPage(0) }}
+              className={selectClass}
+              aria-label="Filter by check-in method"
+            >
+              {METHOD_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          )}
+          {showMdaFilter && (
+            <select
+              value={mdaFilter}
+              onChange={e => { setMdaFilter(e.target.value); setPage(0) }}
+              className={`${selectClass} max-w-[12rem]`}
+              aria-label="Filter by MDA"
+            >
+              <option value="">All MDAs</option>
+              <option value={NO_MDA}>No MDA</option>
+              {mdaNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
+
 
       {filtered.length === 0 ? (
         <div className="px-5 py-10 text-center text-sm text-gray-400 dark:text-slate-400">
           {rows.length === 0
             ? 'No check-ins yet. Share the QR code to start collecting attendance.'
-            : 'No attendees match your search.'}
+            : 'No attendees match your search or filters.'}
         </div>
       ) : (
         <>
@@ -232,7 +310,6 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
                   <th className="px-4 py-2.5 text-left w-10">#</th>
                   <th className="px-4 py-2.5 text-left">Name</th>
                   <th className="px-4 py-2.5 text-left">Institution</th>
-                  <th className="px-4 py-2.5 text-left">MDA</th>
                   <th className="px-4 py-2.5 text-left">Designation</th>
                   <th className="px-4 py-2.5 text-left">Time</th>
                   <th className="px-4 py-2.5 text-center w-16">View</th>
@@ -264,7 +341,6 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-gray-500 dark:text-slate-300">{a.institution ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-gray-500 dark:text-slate-300">{a.mda ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 dark:text-slate-300">{a.designation ?? '—'}</td>
                       <td className="px-4 py-2.5 text-xs text-gray-400 dark:text-slate-400 whitespace-nowrap">
                         {new Date(a.created_at).toLocaleTimeString([], {
@@ -438,13 +514,13 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
                     {editErrors.phone && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{editErrors.phone}</p>}
                   </div>
                   <div>
-                    <label className="label">Email *</label>
+                    <label className="label">Email (optional)</label>
                     <input
                       type="email"
                       className="input-base"
                       value={editForm.email}
                       onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                      placeholder="Email address"
+                      placeholder="Email address (optional)"
                     />
                     {editErrors.email && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{editErrors.email}</p>}
                   </div>
@@ -599,7 +675,7 @@ export default function AttendeeTable({ attendees, revivalAt }: Props) {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Building2 className="mt-0.5 h-4 w-4 text-gray-400 dark:text-slate-400 flex-shrink-0" />
+                    <Landmark className="mt-0.5 h-4 w-4 text-gray-400 dark:text-slate-400 flex-shrink-0" />
                     <div>
                       <p className="text-xs text-gray-400 dark:text-slate-400">MDA</p>
                       <p className="text-sm text-gray-900 dark:text-white">{selected.mda || '—'}</p>

@@ -59,18 +59,22 @@ export default async function EventDetailPage({
   if (event.has_sessions) {
     const { data: sessionAttendees } = await supabase
       .from("attendees")
-      .select("email, session_id")
+      .select("email, phone, session_id")
       .eq("event_id", event.id)
       .not("session_id", "is", null);
 
     if (sessionAttendees) {
-      const emailMap = new Map<string, Set<string>>();
+      // Email is optional, so attendees without one are identified by phone
+      // instead of all collapsing into a single "null" attendee.
+      const attendeeSessions = new Map<string, Set<string>>();
       for (const a of sessionAttendees) {
-        if (!emailMap.has(a.email)) emailMap.set(a.email, new Set());
-        emailMap.get(a.email)!.add(a.session_id);
+        const email = a.email?.trim().toLowerCase();
+        const key = email ? `email:${email}` : `phone:${(a.phone ?? "").replace(/\D/g, "")}`;
+        if (!attendeeSessions.has(key)) attendeeSessions.set(key, new Set());
+        attendeeSessions.get(key)!.add(a.session_id);
       }
-      uniqueAttendeesCount = emailMap.size;
-      singleSessionCount = [...emailMap.values()].filter(s => s.size === 1).length;
+      uniqueAttendeesCount = attendeeSessions.size;
+      singleSessionCount = [...attendeeSessions.values()].filter(s => s.size === 1).length;
     }
   }
 

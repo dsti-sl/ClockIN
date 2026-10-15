@@ -15,6 +15,9 @@ import { isOnline } from '@/lib/utils'
 type StatusFilter = 'all' | 'active' | 'inactive'
 type RoleFilter   = 'all' | 'super' | 'admin'
 
+// Sentinel option value for admins without an MDA.
+const NO_MDA = '__none__'
+
 export default function UsersTable({ users }: { users: Profile[] }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -22,6 +25,7 @@ export default function UsersTable({ users }: { users: Profile[] }) {
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [roleFilter,   setRoleFilter]   = useState<RoleFilter>('all')
+  const [mdaFilter,    setMdaFilter]    = useState('')
   const [page,         setPage]         = useState(0)
   const [perPage,      setPerPage]      = useState(10)
 
@@ -32,7 +36,11 @@ export default function UsersTable({ users }: { users: Profile[] }) {
     return () => clearInterval(id)
   }, [])
 
+  const mdaNames = [...new Set(users.map(mdaName).filter(Boolean))].sort((a, b) => a.localeCompare(b))
+
   const filtered = users.filter(u => {
+    if (mdaFilter === NO_MDA && mdaName(u)) return false
+    if (mdaFilter && mdaFilter !== NO_MDA && mdaName(u) !== mdaFilter) return false
     if (statusFilter === 'active'   && !u.is_active)    return false
     if (statusFilter === 'inactive' &&  u.is_active)    return false
     if (roleFilter   === 'super'    && !u.is_super_admin) return false
@@ -75,7 +83,7 @@ export default function UsersTable({ users }: { users: Profile[] }) {
         <h2 className="section-title">
           Accounts :
           <span className="ml-2 text-sm font-normal text-gray-400 dark:text-slate-400">
-            {search || statusFilter !== 'all' || roleFilter !== 'all'
+            {search || statusFilter !== 'all' || roleFilter !== 'all' || mdaFilter
               ? `${filtered.length} of ${users.length}`
               : users.length}
           </span>
@@ -123,6 +131,20 @@ export default function UsersTable({ users }: { users: Profile[] }) {
             <option value="super">Super admins</option>
             <option value="admin">Admins</option>
           </select>
+          {(mdaNames.length > 0 || mdaFilter) && (
+            <select
+              value={mdaFilter}
+              onChange={e => { setMdaFilter(e.target.value); setPage(0) }}
+              className={`${selectClass} max-w-[12rem]`}
+              aria-label="Filter by MDA"
+            >
+              <option value="">All MDAs</option>
+              <option value={NO_MDA}>No MDA</option>
+              {mdaNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
